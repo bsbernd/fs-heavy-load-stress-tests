@@ -1,0 +1,20 @@
+Source: stress
+Section: devel
+Priority: optional
+Maintainer: Amos Waterland <apw@rossby.metr.ou.edu>
+Build-Depends: debhelper (>> 4.2.0)
+Standards-Version: 3.7.2.2
+
+Package: stress
+Architecture: any
+Depends: ${shlibs:Depends}
+Description: A tool to impose load on and stress test a computer system
+ 'stress' is a tool that imposes a configurable amount of CPU, memory, I/O,
+ or disk stress on a POSIX-compliant operating system and reports any errors
+ it detects.
+ .
+ 'stress' is not a benchmark.  It is a tool used by system administrators to
+ evaluate how well their systems will scale, by kernel programmers to evaluate
+ perceived performance characteristics, and by systems programmers to expose
+ the classes of bugs which only or more frequently manifest themselves when
+ the system is under heavy load.

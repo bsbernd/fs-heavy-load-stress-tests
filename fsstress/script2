@@ -1,0 +1,68 @@
+#!/bin/bash
+
+
+if [ -z "$1" -o -z "$2" ]; then
+        echo
+        echo "Usage: `basename $0` runtime (hours) dir"
+        echo
+        exit 1
+fi
+
+
+DURATION=$1
+DIR=$2
+
+HOSTNAME=$(hostname | awk {'print $1'})
+
+#Convert to seconds
+DURATION=$(( $DURATION * 60 * 60 ))
+
+BASEDIR=${2}/${RANDOM}
+
+mkdir -p ${BASEDIR}/ext3/udp/2/${HOSTNAME}1
+mkdir -p ${BASEDIR}/ext3/udp/3/${HOSTNAME}2
+mkdir -p ${BASEDIR}/ext3/tcp/2/${HOSTNAME}3
+mkdir -p ${BASEDIR}/ext3/tcp/3/${HOSTNAME}4
+mkdir -p ${BASEDIR}/xfs/udp/2/${HOSTNAME}1
+mkdir -p ${BASEDIR}/xfs/udp/3/${HOSTNAME}2
+mkdir -p ${BASEDIR}/xfs/tcp/2/${HOSTNAME}3
+mkdir -p ${BASEDIR}/xfs/tcp/3/${HOSTNAME}4
+mkdir -p ${BASEDIR}/reiserfs/udp/2/${HOSTNAME}1
+mkdir -p ${BASEDIR}/reiserfs/udp/3/${HOSTNAME}2
+mkdir -p ${BASEDIR}/reiserfs/tcp/2/${HOSTNAME}3
+mkdir -p ${BASEDIR}/reiserfs/tcp/3/${HOSTNAME}4
+
+./fsstress -l 0 -d ${BASEDIR}/ext3/udp/2/${HOSTNAME}1 -n 1000 -p 50 -r > ext3.udp.2.log 2>&1 &
+./fsstress -l 0 -d ${BASEDIR}/ext3/udp/3/${HOSTNAME}2 -n 1000 -p 50 -r > ext3.udp.3.log 2>&1 &
+./fsstress -l 0 -d ${BASEDIR}/ext3/tcp/2/${HOSTNAME}3 -n 1000 -p 50 -r > ext3.tcp.2.log 2>&1 &
+./fsstress -l 0 -d ${BASEDIR}/ext3/tcp/3/${HOSTNAME}4 -n 1000 -p 50 -r > ext3.tcp.3.log 2>&1 &
+./fsstress -l 0 -d ${BASEDIR}/xfs/udp/2/${HOSTNAME}1 -n 1000 -p 50 -r > xfs.udp.2.log 2>&1 &
+./fsstress -l 0 -d ${BASEDIR}/xfs/udp/3/${HOSTNAME}2 -n 1000 -p 50 -r > xfs.udp.3.log 2>&1 &
+./fsstress -l 0 -d ${BASEDIR}/xfs/tcp/2/${HOSTNAME}3 -n 1000 -p 50 -r > xfs.tcp.2.log 2>&1 &
+./fsstress -l 0 -d ${BASEDIR}/xfs/tcp/3/${HOSTNAME}4 -n 1000 -p 50 -r > xfs.tcp.3.log 2>&1 &
+./fsstress -l 0 -d ${BASEDIR}/reiserfs/udp/2/${HOSTNAME}1 -n 1000 -p 50 -r > reiserfs.udp.2.log 2>&1 &
+./fsstress -l 0 -d ${BASEDIR}/reiserfs/udp/3/${HOSTNAME}2 -n 1000 -p 50 -r > reiserfs.udp.3.log 2>&1 &
+./fsstress -l 0 -d ${BASEDIR}/reiserfs/tcp/2/${HOSTNAME}3 -n 1000 -p 50 -r > reiserfs.tcp.2.log 2>&1 &
+./fsstress -l 0 -d ${BASEDIR}/reiserfs/tcp/3/${HOSTNAME}4 -n 1000 -p 50 -r > reiserfs.tcp.3.log 2>&1 &
+
+sar.sysstat -o ./lustre.sardata 30 0 &
+
+echo "Test set for $DURATION seconds"
+echo "Testing in progress"
+sleep $DURATION
+echo "Testing done. Killing processes"
+killall -9 sadc
+killall -9 fsstress
+ps -ef | grep -v grep | grep fsstress > /dev/null 2>&1
+TESTING=$?
+while [ $TESTING -eq 0 ]
+do
+  killall -9 fsstress
+  echo -n "."
+  sleep 5
+  ps -ef | grep -v grep | grep fsstress > /dev/null 2>&1
+  TESTING=$?
+done 
+echo "All processes killed. Done."
+
+
