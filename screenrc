@@ -171,3 +171,6 @@ screen -t stress1 stress1.sh
 screen -t stress2 stress2.sh
 screen -t stress3 stress3.sh
 screen -t ntfs3g_posix ntfs3g_posix.sh
+screen -t tar tar.sh
+screen -t find find.sh
+
