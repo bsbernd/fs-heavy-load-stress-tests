@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -e
-
 TESTS=`pwd`
 
 STRESSTIME=1200 # time in hours
