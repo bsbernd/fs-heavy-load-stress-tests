@@ -7,9 +7,9 @@ ql_fstest()
 {
 	local dir=${TESTROOT}/ql-fstest
 	mkdir -p $dir
-	${TESTS}/ql-fstest/fstest $dir
+	${TESTS}/ql-fstest/fstest $dir 2>&1 | tee ${dir}/fstest${$}.log
 }
 
 
-ql_fstest
+ql_fstest 
 
