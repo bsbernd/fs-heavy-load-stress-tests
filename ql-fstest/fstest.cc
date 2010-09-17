@@ -39,6 +39,7 @@
 #include <sstream>
 #include <cassert>
 #include <vector>
+#include <cstring>
 
 static int do_exit(const char* func, unsigned line, int code)
 {
