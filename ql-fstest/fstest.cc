@@ -79,10 +79,10 @@ struct TimeStamp {
 class Dir {
 public:
   Dir(Dir *parent, int num) : parent(parent), next(parent->sub), sub(NULL), files(NULL), name((char[]){'d', '0' + num / 10, '0' + num % 10, 0}), num_files(0) {
-    std::cerr << "Creating dir " << parent->path() << name << std::endl;
+    std::cout << "Creating dir " << parent->path() << name << std::endl;
     parent->sub = this;
     if (mkdir(path().c_str(), 0700) != 0) {
-      std::cerr << "Creating dir " << path();
+      std::cout << "Creating dir " << path();
       perror(": ");
       EXIT(1);
     }
@@ -95,7 +95,7 @@ public:
   Dir(std::string _path) : parent(NULL), next(NULL), sub(NULL), files(NULL), name((char[]){'r', 'o', 't', 0}), num_files(1) {
     root_path = _path;
     if (mkdir(path().c_str(), 0700) != 0) {
-      std::cerr << "Creating working dir " << path();
+      std::cout << "Creating working dir " << path();
       perror(": ");
       EXIT(1);
     }
@@ -127,7 +127,7 @@ std::string Dir::root_path;
 class File {
 public:
   File(Dir *dir, uint64_t size) : dir(dir), prev(NULL), next(NULL), size(size) {
-    //std::cerr << "File('" << dir->path() << "', " << size << ")\n";
+    //std::cout << "File('" << dir->path() << "', " << size << ")\n";
     int fd;
     int i;
     uint32_t t;
@@ -146,11 +146,11 @@ public:
 
     if ((fd = open((path + name).c_str(), O_WRONLY | O_CREAT | O_EXCL, 0600)) == -1) {
       if (errno == EEXIST) goto retry; // Try again with new name
-      std::cerr << "Creating file " << path << name;
+      std::cout << "Creating file " << path << name;
       perror(": ");
       EXIT(1);
     }
-    // std::cerr << "Created " << path << name << std::endl;
+    // std::cout << "Created " << path << name << std::endl;
 
     // Create buffer and fill with id
     char buf[BUF_SIZE];
@@ -166,7 +166,7 @@ public:
       size_t offset = 0;
       while(offset < BUF_SIZE) {
 	ssize_t len;
-	// std::cerr << "Write " << path << name << " at " << s << std::endl;
+	// std::cout << "Write " << path << name << " at " << s << std::endl;
 	if ((len = write(fd, &buf[offset], BUF_SIZE - offset)) < 0) {
 	  std::cerr << "Write to " << path << name << " failed";
 	  perror(": ");
@@ -180,7 +180,7 @@ public:
     files.push_back(this);
   }
   ~File() {
-    // std::cerr << "~File(" << dir->path() + name << ")\n";
+    // std::cout << "~File(" << dir->path() + name << ")\n";
     // Remove from dir
     dir->remove_file(this);
     // delete file
@@ -212,7 +212,7 @@ public:
     prev = next = NULL;
   }
   void check() {
-    //std::cerr << "File::check() on " << dir->path() << name << ", size " << size << std::endl;
+    //std::cout << "File::check() on " << dir->path() << name << ", size " << size << std::endl;
     int fd;
 
     // Open file
@@ -275,7 +275,7 @@ private:
 };
 
 Dir::~Dir() {
-    std::cerr << "~Dir(" << path() << ")\n";
+    std::cout << "~Dir(" << path() << ")\n";
     if (next != NULL) delete next;
     if (sub != NULL) delete sub;
     if (files != NULL) {
@@ -309,7 +309,7 @@ void usage(std::ostream &out) {
 }
 
 void cleandir(void) {
-    std::cerr << "cleandir()\n";
+    std::cout << "cleandir()\n";
     if (root_dir != NULL) {
 	delete root_dir;
 	root_dir = NULL;
@@ -325,12 +325,12 @@ void fstest(uint64_t goal) {
   std::cout << "Starting test       : " << ctime(&old.time);
 
   while(true) {
-    // std::cerr << "all_dirs: " << all_dirs.size() << std::endl;
-    // std::cerr << "active_dirs: " << active_dirs.size() << std::endl;
+    // std::cout << "all_dirs: " << all_dirs.size() << std::endl;
+    // std::cout << "active_dirs: " << active_dirs.size() << std::endl;
     
     // Pick a random file size
     size_t size = 1ULL << (size_min + random() % (size_max - size_min + 1));
-    // std::cerr << "Size: " << size << std::endl;
+    // std::cout << "Size: " << size << std::endl;
 
     // Check space
     while(true) {
@@ -340,8 +340,8 @@ void fstest(uint64_t goal) {
 	EXIT(1);
       }
       uint64_t fsfree = vfsbuf.f_bavail * vfsbuf.f_frsize;
-      // std::cerr << "Free: " << fsfree << std::endl;
-      // std::cerr << "Goal: " << goal << std::endl;
+      // std::cout << "Free: " << fsfree << std::endl;
+      // std::cout << "Goal: " << goal << std::endl;
 
       // Enough free already?
       if (size < fsfree && fsfree - size / 2 > goal) {
@@ -363,14 +363,14 @@ void fstest(uint64_t goal) {
     
     // Pick a random directory
     int num = random() % active_dirs.size();
-    // std::cerr << "Picked " << active_dirs[num]->path() << std::endl;
+    // std::cout << "Picked " << active_dirs[num]->path() << std::endl;
 
     // Create file
     new File(active_dirs[num], size);
     now.write += size;
     ++now.files;
-    // std::cerr << "dir->num_files: " << active_dirs[num]->get_num_files() << std::endl;
-    // std::cerr << "files: " << files.size() << std::endl;
+    // std::cout << "dir->num_files: " << active_dirs[num]->get_num_files() << std::endl;
+    // std::cout << "files: " << files.size() << std::endl;
 
     // Remove dir from active_dirs if full
     if (active_dirs[num]->get_num_files() >= max_files) {
@@ -381,7 +381,7 @@ void fstest(uint64_t goal) {
     if (active_dirs.size() == 0) {
       ++level;
       max_files = level * level;
-      std::cerr << "Going to level " << level << std::endl;
+      std::cout << "Going to level " << level << std::endl;
       active_dirs = all_dirs;
       new Dir(root_dir, level);
     };
