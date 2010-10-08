@@ -22,7 +22,7 @@ TESTS=`pwd`
 
 STRESSTIME=1200 # time in hours
 TESTROOT_PARALLEL=${RUNDIR}
-TESTROOT=${RUNDIR}/${HOSTNAME}
+TESTROOT=${RUNDIR}/\`hostname\`
 EOF
 
 make
