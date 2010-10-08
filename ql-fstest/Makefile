@@ -1,15 +1,18 @@
-all: fstest
 
-CXXFLAGS = -O2 -W -Wall -g 
-CXX=g++
+CXXFLAGS = -O2 -W -Wall 
+CXX = g++
 
 # LDFLAGS=-m32 -static -D_FILE_OFFSET_BITS=64
-LDFLAGS=-static -D_FILE_OFFSET_BITS=64
+LDFLAGS=-D_FILE_OFFSET_BITS=64 -O2 -lpthread
 
-fstest: fstest.o
-	$(CXX) $(LDFLAGS) -o $@ $+
+FILES = fstest.o dir.o file.o filesystem.o
+
+all: fstest
+
+fstest: $(FILES)
+	$(CXX) $(LDFLAGS) -o $@ $(FILES)
 
 fstest.o: fstest.cc
 
 clean:
-	rm -f fstest fstest.o
+	rm -f fstest *.o
