@@ -155,7 +155,8 @@ retry:
 		
 		string fname = file->fname;
 		int nchecks = file->num_checks;
-				
+			
+		// Check if read-thread already has verified it
 		if (nchecks == 0) {
 			file->unlock();
 			if (this->files.size() > 2) {
@@ -172,13 +173,11 @@ retry:
 			}
 		}
 		
-		if (nchecks < 3) {
-			// check the file a last time
-			if (file->check()) {
-				this->error_detected = true;
-				// we exit the write thread
-				pthread_exit(NULL);
-			}
+		// check the file a last time
+		if (nchecks < 3 && file->check()) {
+			this->error_detected = true;
+			// we exit the write thread
+			pthread_exit(NULL);
 		}
 		
 		this->lock();
@@ -253,7 +252,10 @@ void Filesystem::write(void)
 			cout << stats_now.time << " write: " << stats_now.write / GIGA 
 				<< " GiB [" << write << " MiB/s] read: " << stats_now.read / GIGA 
 				<< " GiB [" << read << " MiB/s] Files: " << stats_now.num_files 
-				<< " [" << files << " files/s] # " << ctime(&stats_now.time);
+				<< " [" << files << " files/s] # " << ctime(&stats_now.time)
+				<< " idx write: " << this->files.size()
+				<< " idx read: " << this->last_read_index 
+				<< endl;
 			
 			cout.flush();
 			this->update_stats();
@@ -263,8 +265,13 @@ void Filesystem::write(void)
 		// Some filesystems prefer writes over reads. But we don't want
 		// to let the reads to fall too far behind. Use arbitrary limit
 		// of 20 files
-		while  (this->stats_now.num_written_files > this->stats_now.num_read_files + 20)
-			sleep(1);
+			while (this->last_read_index + 20 < this->files.size())
+		if (!this->was_full) {
+				sleep(1);
+		} else {
+			while  (this->stats_now.num_written_files > this->stats_now.num_read_files + 20)
+				sleep(1);
+		}
 	}
 }
 
@@ -314,16 +321,26 @@ start_again:
 		this->unlock();
 		index++;
 newindex:
-		this->lock();
-		unsigned long current_num_files = this->files.size();
-		if (index >= current_num_files) {
-			this->unlock();
-			// last file, restart from beginning
-			if (!this->was_full)
-				sleep(20); // give it some time to write new data
+		if (!this->was_full)
+			while (index + 5 >= this->files.size()) {
+			// we want writes to be slightly ahead of reads
+			// due to the page cache
+				sleep(1); // give it some time to write new data
+		} else if (index >= this->files.size()) {
+			// Filesystem was full
 			cout << "Re-starting to read from index 0 (was "
 				<< index << ")" << endl;
 			index = 0;
+			goto newindex;
+		}
+		
+		this->lock();
+		
+		// double check, now that we have locked it
+		if (index >= this->files.size()) {
+			// the write thread deleted our file...
+			this->unlock();
+			index--;
 			goto newindex;
 		}
 		
