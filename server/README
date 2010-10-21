@@ -1,0 +1,5 @@
+Run this script on the server side while running
+client side fstests. Hostnames need to be adjusted
+in the script, though.
+
+TODO: Reset hosts given by pacemaker, except the run system
