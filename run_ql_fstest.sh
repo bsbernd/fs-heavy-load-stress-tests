@@ -25,7 +25,7 @@ TESTROOT_PARALLEL=${RUNDIR}
 TESTROOT=${RUNDIR}/\`hostname\`
 EOF
 
-make
+#make
 
 echo "Starting tests in screen session"
-screen -dm -c ${dir}/screenrc_ql_fstest
+screen -S ql_fstests -dm -c ${dir}/screenrc_ql_fstest

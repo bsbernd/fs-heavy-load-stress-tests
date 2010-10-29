@@ -28,4 +28,4 @@ EOF
 make
 
 echo "Starting tests in screen session"
-screen -dm -c ${dir}/screenrc
+screen -S all_tests -dm -c ${dir}/screenrc
