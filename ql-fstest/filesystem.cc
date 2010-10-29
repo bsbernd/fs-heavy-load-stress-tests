@@ -110,7 +110,7 @@ void Filesystem::update_stats(void)
 void Filesystem::free_space(size_t fsize)
 {
 	if (this->error_detected)
-		pthread_exit(NULL); // Don't delete anything, just exit now
+		pthread_exit(NULL); // Don't delete anything, just exit immediately
 	
 	struct statvfs vfsbuf;
 		
@@ -120,16 +120,22 @@ void Filesystem::free_space(size_t fsize)
 	}
 	uint64_t fsfree = vfsbuf.f_bavail * vfsbuf.f_frsize;
 
-	while(this->fssize - fsfree - fsize > this->fs_use_goal)
+	int retry_count = 0;
+	while(this->fssize - fsfree - fsize > this->fs_use_goal 
+		&& retry_count < 20 
+		&& this->files.size() > 2)
 	{
-		this->was_full = true;
+		retry_count++;
+		
+		if (!this->was_full) {
+			this->was_full = true;
+			cout << "Going into write/delete mode" << endl;
+		}
 		// Remove a file
-	
-		int retry_count = 0;
-retry:
+			
 		this->lock();
 		int nfiles = files.size();
-		if (nfiles < 5) {
+		if (nfiles < 1) {
 			this->unlock();
 			return; // no files left to delete
 		}
@@ -139,17 +145,11 @@ retry:
 
 		// Don't delete a file that is in read or not checked yet
 		// Our read loop does not like that
-		int rc = file->trylock();
-		if (rc && rc == EBUSY) {
+		if (file->trylock()) {
 			// File probably just in read
 			this->unlock();
 			sleep(1);
-			retry_count++;
-			
-			if (retry_count < 10 && nfiles > 10)
-				goto retry;
-			else
-				return;
+			continue;
 		}
 		this->unlock();
 		
@@ -159,22 +159,12 @@ retry:
 		// Check if read-thread already has verified it
 		if (nchecks == 0) {
 			file->unlock();
-			if (this->files.size() > 2) {
-#ifdef DEBUG
-				cerr << fname
-					<< " num_checks: "
-					<< nchecks << endl;
-#endif
-				sleep(1);
-				goto retry; // try another file
-			} else {
-				// We need more files before we can delete one
-				return;
-			}
+			sleep(1);
+			continue;
 		}
 		
 		// check the file a last time
-		if (nchecks < 3 && file->check()) {
+		if (nchecks < 10 && file->check()) {
 			this->error_detected = true;
 			// we exit the write thread
 			pthread_exit(NULL);
@@ -265,8 +255,8 @@ void Filesystem::write(void)
 		// Some filesystems prefer writes over reads. But we don't want
 		// to let the reads to fall too far behind. Use arbitrary limit
 		// of 20 files
-			while (this->last_read_index + 20 < this->files.size())
 		if (!this->was_full) {
+			while (this->last_read_index + 100 < this->files.size())
 				sleep(1);
 		} else {
 			while  (this->stats_now.num_written_files > this->stats_now.num_read_files + 20)
@@ -294,12 +284,7 @@ start_again:
 #ifdef DEBUG
 	cerr << "Starting to read files" << endl;
 #endif
-	
-	if (this->files.size() < 2) {
-		// Arg, already deleted again!
-		this->unlock();
-	}
-	
+		
 	File *file = this->files.at(index);
 	// now lock the file, still a chance of a race, until the unlink()
 	// methods also lock the filesystem first -> FIXME
@@ -308,7 +293,7 @@ start_again:
 
 	while(true) {
 		// file is locked here
-		
+
 		if (file->check())
 			this->error_detected = true;
 		int fsize = file->get_fsize();
@@ -319,19 +304,30 @@ start_again:
 		this->stats_now.read += fsize;
 		this->stats_now.num_read_files++;
 		this->unlock();
-		index++;
+
+		// no lock here anymore
 newindex:
-		if (!this->was_full)
-			while (index + 5 >= this->files.size()) {
-			// we want writes to be slightly ahead of reads
-			// due to the page cache
+		index++;
+
+		if (this->was_full == false) {
+			while (index + 20 >= this->files.size()) {
+				// we want writes to be slightly ahead of reads
+				// due to the page cache
 				sleep(1); // give it some time to write new data
+				if (this->was_full) {
+					// Filesystem was full
+					cout << "Re-starting to read from index 0 (was "
+						<< index << ")" << endl;
+					index = 0;
+					break;
+				}
+					
+			}
 		} else if (index >= this->files.size()) {
 			// Filesystem was full
 			cout << "Re-starting to read from index 0 (was "
 				<< index << ")" << endl;
 			index = 0;
-			goto newindex;
 		}
 		
 		this->lock();
@@ -346,15 +342,10 @@ newindex:
 		
 		File *tmp;
 		tmp = this->files.at(index);
-		if (tmp == file) {
-			this->unlock();
-			continue; // re-read the current file
-		}
 		
 		if (tmp->trylock()) {
 			this->unlock();
 			// file is busy, take next file
-			index++;
 			goto newindex;
 		}
 

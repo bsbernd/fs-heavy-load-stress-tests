@@ -53,10 +53,19 @@ private:
 	Dir *directory;
 	File *prev, *next; // only per directory, not globally
 	size_t fsize; // the file size 
-	uint32_t id;  // checksum pattern
-	pthread_mutex_t mutex;
-	bool has_error;
+
+	union {
+		uint32_t value; // a random integer will be transformed into
+		char checksum[4];    // a checksum
+		
+	}id;  // checksum pattern
 	
+	pthread_mutex_t mutex;
+	char *time_buf; // for ctime_r(time, time_buf)
+	string create_time; //create time 
+	
+	bool sync_failed; // fsync() or close() failed
+	bool has_error; // 
 public:
 	char fname[9]; // file name
 	File(Dir *dir, uint64_t num);
@@ -77,6 +86,8 @@ public:
 	size_t get_fsize(void) const;
 
 	int num_checks; // how often this file aready has been verified
+	
+	
 };
 
 #endif // __FILE_H__

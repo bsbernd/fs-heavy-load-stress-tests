@@ -1,9 +1,9 @@
 
-CXXFLAGS = -O2 -W -Wall 
+CXXFLAGS = -O2 -W -Wall -ggdb 
 CXX = g++
 
 # LDFLAGS=-m32 -static -D_FILE_OFFSET_BITS=64
-LDFLAGS=-D_FILE_OFFSET_BITS=64 -O2 -lpthread
+LDFLAGS=-D_FILE_OFFSET_BITS=64 -ggdb -O2 -lpthread
 
 FILES = fstest.o dir.o file.o filesystem.o
 
