@@ -3,7 +3,7 @@
  * Filesystem stress and verify
  *
  * Authors: Goswin von Brederlow <brederlo@informatik.uni-tuebingen.de>
- *          Bernd Schubert <bschubert@ddn.com>
+ *          Bernd Schubert <bernd.schubert@fastmail.fm>
  *
  * Copyright (C) 2007 Q-leap Networks, Goswin von Brederlow
  *               2010 DataDirect Networks, Bernd Schubert
@@ -43,7 +43,7 @@ private:
 
 	uint64_t fssize;
 	uint64_t fsfree;
-	uint64_t fs_use_goal;
+	double fs_use_goal;
 	double goal_percent;
 	bool was_full;
 	unsigned long last_read_index; // last index read in

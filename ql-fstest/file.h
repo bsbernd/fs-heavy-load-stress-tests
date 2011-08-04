@@ -3,7 +3,7 @@
  * Filesystem stress and verify
  *
  * Authors: Goswin von Brederlow <brederlo@informatik.uni-tuebingen.de>
- *          Bernd Schubert <bschubert@ddn.com>
+ *          Bernd Schubert <bernd.schubert@fastmail.fm>
  *
  * Copyright (C) 2007 Q-leap Networks, Goswin von Brederlow
  *               2010 DataDirect Networks, Bernd Schubert
@@ -68,7 +68,7 @@ private:
 	bool has_error; // 
 public:
 	char fname[9]; // file name
-	File(Dir *dir, uint64_t num);
+	File(Dir *dir, size_t fsize);
 
 	~File(void);
 

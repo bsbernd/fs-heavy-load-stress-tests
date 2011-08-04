@@ -3,7 +3,7 @@
  * Filesystem stress and verify
  *
  * Authors: Goswin von Brederlow <brederlo@informatik.uni-tuebingen.de>
- *          Bernd Schubert <bschubert@ddn.com>
+ *          Bernd Schubert <bernd.schubert@fastmail.fm>
  *
  * Copyright (C) 2007 Q-leap Networks, Goswin von Brederlow
  *               2010 DataDirect Networks, Bernd Schubert
@@ -70,7 +70,9 @@ retry:
 		EXIT(1);
 	}
 	
-	close(fd);
+	int rc = close(fd);
+	if (rc)
+		cerr << "Close " << path << fname << " failed: " << strerror(errno) << endl;
 	
 	directory->fs->files.push_back(this);
 }
@@ -100,7 +102,11 @@ void File::fwrite(void)
 		tmp.erase(tmp.length() - 1); // remove "\n"
 	
 	// Create buffer and fill with id
-	char buf[BUF_SIZE];
+	char *buf = (char *)malloc(BUF_SIZE);
+	if (!buf) {
+		cerr << "malloc failed" << endl;
+		EXIT(1);
+	}
 	size_t size = sizeof(this->id.checksum);
 	
 	memcpy(&buf[0], this->id.checksum, size);
@@ -114,8 +120,8 @@ void File::fwrite(void)
 		while(offset < BUF_SIZE) {
 			ssize_t len;
 #ifdef DEBUG
-			cout << "Write " << this->path << this->fname 
-				<< " at " << s << std::endl;
+			cout << "Write " << path << this->fname 
+				<< " at " << offset << std::endl;
 #endif
 			if ((len = write(fd, &buf[offset], BUF_SIZE - offset)) < 0) {
 				if (errno == ENOSPC) {
@@ -140,18 +146,21 @@ out:
 	rc = fdatasync(fd);
 	if (rc) {
 		cerr << "fdatasync() " << path << this->fname 
-			<< " failed" << strerror(errno) <<endl;
+			<< " failed (rc = " << rc << "): " 
+			<< strerror(errno) <<endl;
 		this->sync_failed = true;
 	}
 	// Try to remove pages from memory to let the kernel re-read the file
 	// from disk on later reads
 	posix_fadvise(fd, 0, 0, POSIX_FADV_DONTNEED);
-	close(fd);
+	rc = close(fd);
 	if (rc) {
 		cerr << "close() " << path << this->fname 
-			<< " failed: " << strerror(errno) << endl;
+			<< " failed: (rc = " << rc << "): "
+			<< strerror(errno) << endl;
 		this->sync_failed = true;
 	}
+	free(buf);
 }
 
 
@@ -223,6 +232,8 @@ int File::check(void)
 	cerr << " Checking file " << this->directory->path() << this->fname << endl;
 #endif
 
+	int ret = 1;
+
 	if (this->has_error)
 		return 0; // No need to further check this
 
@@ -245,8 +256,13 @@ again:
 	posix_fadvise(fd, 0 ,0, POSIX_FADV_NOREUSE);
 
 	//Create buffer and fill with id
-	char bufm[BUF_SIZE];
-	char buff[BUF_SIZE];
+	char *bufm = (char *)malloc(BUF_SIZE);
+	char *buff = (char *)malloc(BUF_SIZE);
+	if (!bufm or !buff) {
+		cerr << "Malloc failed" << endl;
+		EXIT(1);
+	}
+
 	size_t size = sizeof(this->id.checksum);
 	
 	memcpy(&bufm[0], this->id.checksum, size);
@@ -292,15 +308,17 @@ again:
 			cerr << "After n-checks: " <<  this->num_checks << endl;
 			for (unsigned ia = 0; ia < BUF_SIZE; ia++) {
 				if (memcmp(bufm + ia, buff + ia, 1) != 0) {
-					fprintf(stderr, "Expected: %x, got: %x (pos = %ld)\n",
+					fprintf(stderr, "Expected: %x, got: %x (pos = %lu)\n",
 					        (unsigned char) bufm[ia], (unsigned char) buff[ia],
-					        size + ia);
+					        (long unsigned) size + ia);
 				}
 			}
 			// Do not return an error and abort writes, if we know
 			// this sync to disk of this file failed
-			if (!this->sync_failed)
-				return 1;
+			if (!this->sync_failed) {
+				ret = 1;
+				goto out;
+			}
 		}
 	}
 
@@ -311,7 +329,12 @@ again:
 	close(fd);
 	
 	this->num_checks++;
-	return 0;
+	ret = 0;
+
+out:
+	free(bufm);
+	free(buff);
+	return ret;
 }
 
 File * File::get_next() const

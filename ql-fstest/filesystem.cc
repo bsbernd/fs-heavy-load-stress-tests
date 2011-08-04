@@ -3,7 +3,7 @@
  * Filesystem stress and verify
  *
  * Authors: Goswin von Brederlow <brederlo@informatik.uni-tuebingen.de>
- *          Bernd Schubert <bschubert@ddn.com>
+ *          Bernd Schubert <bernd.schubert@fastmail.fm>
  *
  * Copyright (C) 2007 Q-leap Networks, Goswin von Brederlow
  *               2010 DataDirect Networks, Bernd Schubert
@@ -47,7 +47,7 @@ Filesystem::Filesystem(string dir, double percent)
 	memset(&stats_all, 0, sizeof(stats_all));
 	this->update_stats();
 
-	fs_use_goal = this->fssize * percent;
+	this->fs_use_goal = (double) this->fssize * percent;
 	
 	cout << "Filesystem size     : " << fssize << endl;
 	cout << "Filesystem free     : " << fsfree << endl;
@@ -86,8 +86,14 @@ void Filesystem::update_stats(void)
 		EXIT(1);
 	}
 
-	fssize = statvfsbuf.f_blocks * statvfsbuf.f_frsize;
-	fsfree = statvfsbuf.f_bavail * statvfsbuf.f_frsize;
+#ifdef DEBUG
+	cout 	<< "statvfsbuf.f_blocks=" << statvfsbuf.f_blocks <<endl
+	     	<< "statvfsbuf.f_frsize=" << statvfsbuf.f_frsize <<endl
+		<< "statvfsbuf.f_bavail=" << statvfsbuf.f_bavail 
+		<< endl;
+#endif
+	fssize = (uint64_t) statvfsbuf.f_blocks * statvfsbuf.f_frsize;
+	fsfree = (uint64_t) statvfsbuf.f_bavail * statvfsbuf.f_frsize;
 	
 	// TODO:  overload an op?*
 	this->stats_all.read += this->stats_now.read;
@@ -118,10 +124,10 @@ void Filesystem::free_space(size_t fsize)
 		perror("statvfs()");
 		EXIT(1);
 	}
-	uint64_t fsfree = vfsbuf.f_bavail * vfsbuf.f_frsize;
+	double fsfree = vfsbuf.f_bavail * vfsbuf.f_frsize;
 
 	int retry_count = 0;
-	while(this->fssize - fsfree - fsize > this->fs_use_goal 
+	while((double) this->fssize - fsfree - (double) fsize > (double)this->fs_use_goal 
 		&& retry_count < 20 
 		&& this->files.size() > 2)
 	{
