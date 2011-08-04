@@ -2,6 +2,15 @@
 
 ntest=1
 
+TESTNAME=`basename $0`
+scriptdir=`dirname $0`
+TESTTYPE=`basename $scriptdir`
+
+VERBOSE_DIR="/tmp/ntfs3g_posix/"
+VERBOSE_OUT="${VERBOSE_DIR}/${TESTTYPE}.${TESTNAME}.log"
+
+mkdir -p ${VERBOSE_DIR}
+
 name253="_123456789_123456789_123456789_123456789_123456789_123456789_123456789_123456789_123456789_123456789_123456789_123456789_123456789_123456789_123456789_123456789_123456789_123456789_123456789_123456789_123456789_123456789_123456789_123456789_123456789_12"
 name255="${name253}34"
 name256="${name255}5"
@@ -73,8 +82,10 @@ expect()
 	echo "${r}" | egrep '^'${e}'$' >/dev/null 2>&1
 	if [ $? -eq 0 ]; then
 		echo "ok ${ntest}"
+		echo "ok ${ntest}: ${fstest} $*" >>$VERBOSE_OUT
 	else
 		echo "not ok ${ntest}"
+		echo -e "\e[00;31m not ok ${ntest}: ${fstest} $*\e[00m" >>$VERBOSE_OUT
 	fi
 	ntest=`expr $ntest + 1`
 }
