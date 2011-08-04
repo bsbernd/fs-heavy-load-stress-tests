@@ -67,7 +67,7 @@ ctime1=`${fstest} stat ${n0} ctime`
 sleep 1
 expect 0 chmod ${n0} 0111
 ctime2=`${fstest} stat ${n0} ctime`
-test_check $ctime1 -lt $ctime2
+test_check $ctime1 -lt $ctime2 || echo "Time not updated on ${n0}" >>$VERBOSE_OUT
 expect 0 unlink ${n0}
 
 expect 0 mkdir ${n0} 0755
@@ -75,7 +75,7 @@ ctime1=`${fstest} stat ${n0} ctime`
 sleep 1
 expect 0 chmod ${n0} 0753
 ctime2=`${fstest} stat ${n0} ctime`
-test_check $ctime1 -lt $ctime2
+test_check $ctime1 -lt $ctime2 || echo "Time not updated on ${n0}" >>$VERBOSE_OUT
 expect 0 rmdir ${n0}
 
 expect 0 mkfifo ${n0} 0644
@@ -83,7 +83,7 @@ ctime1=`${fstest} stat ${n0} ctime`
 sleep 1
 expect 0 chmod ${n0} 0310
 ctime2=`${fstest} stat ${n0} ctime`
-test_check $ctime1 -lt $ctime2
+test_check $ctime1 -lt $ctime2 || echo "Time not updated on ${n0}"
 expect 0 unlink ${n0}
 
 if supported lchmod; then
@@ -92,7 +92,7 @@ if supported lchmod; then
 	sleep 1
 	expect 0 lchmod ${n0} 0321
 	ctime2=`${fstest} lstat ${n0} ctime`
-	test_check $ctime1 -lt $ctime2
+	test_check $ctime1 -lt $ctime2 || echo "Time not updated on ${n0}"
 	expect 0 unlink ${n0}
 fi
 
@@ -101,8 +101,8 @@ expect 0 create ${n0} 0644
 ctime1=`${fstest} stat ${n0} ctime`
 sleep 1
 expect EPERM -u 65534 chmod ${n0} 0111
-ctime2=`${fstest} stat ${n0} ctime`
-test_check $ctime1 -eq $ctime2
+ctime2=`${fstest} stat ${n0} ctime` 
+test_check $ctime1 -eq $ctime2 || echo "Time not updated on ${n0}"
 expect 0 unlink ${n0}
 
 expect 0 mkdir ${n0} 0755
@@ -110,7 +110,7 @@ ctime1=`${fstest} stat ${n0} ctime`
 sleep 1
 expect EPERM -u 65534 chmod ${n0} 0753
 ctime2=`${fstest} stat ${n0} ctime`
-test_check $ctime1 -eq $ctime2
+test_check $ctime1 -eq $ctime2 || echo "Time not updated on ${n0}"
 expect 0 rmdir ${n0}
 
 expect 0 mkfifo ${n0} 0644
@@ -118,7 +118,7 @@ ctime1=`${fstest} stat ${n0} ctime`
 sleep 1
 expect EPERM -u 65534 chmod ${n0} 0310
 ctime2=`${fstest} stat ${n0} ctime`
-test_check $ctime1 -eq $ctime2
+test_check $ctime1 -eq $ctime2 || echo "Time not updated on ${n0}"
 expect 0 unlink ${n0}
 
 if supported lchmod; then
@@ -127,7 +127,7 @@ if supported lchmod; then
 	sleep 1
 	expect EPERM -u 65534 lchmod ${n0} 0321
 	ctime2=`${fstest} lstat ${n0} ctime`
-	test_check $ctime1 -eq $ctime2
+	test_check $ctime1 -eq $ctime2 || echo "Time not updated on ${n0}"
 	expect 0 unlink ${n0}
 fi
 
