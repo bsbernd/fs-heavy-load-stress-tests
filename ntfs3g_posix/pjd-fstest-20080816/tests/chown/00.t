@@ -12,9 +12,9 @@ else
 	echo "1..171"
 fi
 
-n0=`namegen`
-n1=`namegen`
-n2=`namegen`
+n0=name0
+n1=name1
+n2=name2
 
 expect 0 mkdir ${n2} 0755
 cdir=`pwd`
@@ -282,14 +282,17 @@ ctime1=`${fstest} stat ${n0} ctime`
 sleep 1
 expect 0 -- chown ${n0} -1 -1
 ctime2=`${fstest} stat ${n0} ctime`
-case "${os}:${fs}" in
-Linux:ext3)
-	test_check $ctime1 -lt $ctime2
-        ;;
-*)
-	test_check $ctime1 -eq $ctime2
-        ;;
-esac
+
+#case "${os}:${fs}" in
+#Linux:ext3)
+#	test_check $ctime1 -lt $ctime2
+#        ;;
+#*)
+#	test_check $ctime1 -eq $ctime2
+#        ;;
+#esac
+test_check $ctime1 -eq $ctime2
+
 expect 0 unlink ${n0}
 # 158
 expect 0 mkdir ${n0} 0644
@@ -297,29 +300,36 @@ ctime1=`${fstest} stat ${n0} ctime`
 sleep 1
 expect 0 -- chown ${n0} -1 -1
 ctime2=`${fstest} stat ${n0} ctime`
-case "${os}:${fs}" in
-Linux:ext3)
-	test_check $ctime1 -lt $ctime2
-        ;;
-*)
-	test_check $ctime1 -eq $ctime2
-        ;;
-esac
+
+#case "${os}:${fs}" in
+#Linux:ext3)
+#	test_check $ctime1 -lt $ctime2
+#        ;;
+#*)
+#	test_check $ctime1 -eq $ctime2
+#        ;;
+#esac
+test_check $ctime1 -eq $ctime2
+
 expect 0 rmdir ${n0}
 # 162
 expect 0 mkfifo ${n0} 0644
 ctime1=`${fstest} stat ${n0} ctime`
 sleep 1
+
 expect 0 -- chown ${n0} -1 -1
 ctime2=`${fstest} stat ${n0} ctime`
-case "${os}:${fs}" in
-Linux:ext3)
-	test_check $ctime1 -lt $ctime2
-        ;;
-*)
-	test_check $ctime1 -eq $ctime2
-        ;;
-esac
+#case "${os}:${fs}" in
+#Linux:ext3)
+#	test_check $ctime1 -lt $ctime2
+#        ;;
+#*)
+#	test_check $ctime1 -eq $ctime2
+#        ;;
+#esac
+test_check $ctime1 -eq $ctime2
+
+
 expect 0 unlink ${n0}
 # 166
 expect 0 symlink ${n1} ${n0}
@@ -327,14 +337,18 @@ ctime1=`${fstest} lstat ${n0} ctime`
 sleep 1
 expect 0 -- lchown ${n0} -1 -1
 ctime2=`${fstest} lstat ${n0} ctime`
-case "${os}:${fs}" in
-Linux:ext3)
-	test_check $ctime1 -lt $ctime2
-        ;;
-*)
-	test_check $ctime1 -eq $ctime2
-        ;;
-esac
+
+#case "${os}:${fs}" in
+#Linux:ext3)
+#	test_check $ctime1 -lt $ctime2
+#        ;;
+#*)
+#	test_check $ctime1 -eq $ctime2
+#        ;;
+#esac
+test_check $ctime1 -eq $ctime2
+
+
 expect 0 unlink ${n0}
 
 # unsuccessful chown(2) does not update ctime.
