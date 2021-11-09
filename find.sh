@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source source_me.sh
+source include-config.sh
 
 while [ 1 -eq 1 ]; do
         find  ${TESTROOT_PARALLEL} >/dev/null

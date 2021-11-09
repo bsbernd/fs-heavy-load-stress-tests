@@ -15,7 +15,7 @@ set -e
 dir=`dirname $0`
 cd $dir
 
-source source_me.sh
+source include-config.sh
 
 if [ -n "$1" ]; then
 	TESTROOT="$1/`hostname`/"

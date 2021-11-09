@@ -1,5 +1,5 @@
 #!/bin/bash
 
-source source_me.sh
+source include-config.sh
 
 append/parallel_append.sh ${TESTROOT_PARALLEL}/append

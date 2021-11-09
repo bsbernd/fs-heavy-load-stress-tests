@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source source_me.sh
+source include-config.sh
 
 ntfs3g_posix()
 {

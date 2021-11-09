@@ -2,7 +2,8 @@
 
 set -e
 
-dir=`dirname $0`
+dir="$(dirname $0)"
+dir="$(readlink -f ${dir})"
 cd $dir
 export PATH=$PATH:$dir
 
@@ -18,7 +19,7 @@ RUNDIR="$1"
 cat <<EOF >source_me.sh
 #!/bin/bash
 
-TESTS=`pwd`
+TESTS=${dir}
 
 STRESSTIME=1200 # time in hours
 TESTROOT_PARALLEL=${RUNDIR}

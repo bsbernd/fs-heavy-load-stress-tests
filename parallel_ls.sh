@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source source_me.sh
+source include-config.sh
 
 while [ /bin/true ]; do 
 	 /bin/ls -l ${TESTROOT_PARALLEL}/append

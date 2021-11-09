@@ -1,19 +1,25 @@
-#!/bin/bash
 
 dir=`dirname $0`
 cd $dir
 export PATH=$PATH:$dir
 
-source source_me.sh
+source include-config.sh
 
-for file in ${TESTROOT_PARALLEL}/*/ql-fstest/*.err; do
-	if [ -s "$file" ]; then
-		ls -l $file 
-	fi
+LOG_DIR="${HOME}/tmp/fstests"
+
+for dir in in ${LOG_DIR}/*; do
+    [ -d ${dir} ] || continue
+
+    #echo "dir: $dir"
+
+    for file in ${dir}/*err; do
+        if [ -s "$file" ]; then
+            ls -l $file
+        fi
+    done
 done
 
-for file in ${TESTROOT_PARALLEL}/*/ql-fstest/*.log; do
-	grep "eviction" $file
+for file in ${LOG_DIR}/*/*.log; do
+    grep "eviction" $file || true
 done
-
 
