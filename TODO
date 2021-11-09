@@ -1,0 +1,8 @@
+- ql-fstest should become a submodule
+
+- xfstests should become a submodule and updated to the current version
+
+- documentation how to use it
+
+- Use xfstests to get its result (instead of just trying to crash 
+  clients/servers).
